@@ -39,7 +39,8 @@ class Tcx:
             df['Speed'] = df['DistanceMeters-delta'] / df['Time-delta'].apply(lambda td: td.total_seconds()) * 3.6
 
             ## speed / cadence
-            df['Speed-per-cadence'] = df['Speed'] / df['Cadence'].apply(lambda x: float(x))
+            df['Cadence'] = df['Cadence'].apply(lambda x: float(x))
+            df['speed-per-cadence'] = df['Speed'] / df['Cadence']
             return df
 
 
