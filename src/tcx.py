@@ -4,10 +4,9 @@ import numpy as np
 from io import open
 from xmltodict import parse as xml_parse
 
-COLUMN_NAME_SPEED = 'Ext.Speed'
-
+COLUMN_NAME_EXT_SPEED = 'Ext.Speed'
+COLUMN_NAME_SPEED = 'Speed'
 COLUMN_NAME_CADENCE = 'Cadence'
-
 COLUMN_NAME_WATTS = 'Ext.Watts'
 
 
@@ -28,8 +27,8 @@ class Tcx:
 
             df[COLUMN_NAME_WATTS] = [find_value_by_key_containing(first_dict_value(extension_dict), 'Watts') for extension_dict in df['Extensions']]
             df[COLUMN_NAME_WATTS] = df[COLUMN_NAME_WATTS].apply(lambda x: float(x))
-            df[COLUMN_NAME_SPEED] = [find_value_by_key_containing(first_dict_value(extension_dict), 'Speed') for extension_dict in df['Extensions']]
-            df[COLUMN_NAME_SPEED] = df[COLUMN_NAME_SPEED].apply(lambda x: float(x))
+            df[COLUMN_NAME_EXT_SPEED] = [find_value_by_key_containing(first_dict_value(extension_dict), 'Speed') for extension_dict in df['Extensions']]
+            df[COLUMN_NAME_EXT_SPEED] = df[COLUMN_NAME_EXT_SPEED].apply(lambda x: float(x))
 
             # Distance delta
             df['DistanceMeters-delta'] = pd.Series(
@@ -45,7 +44,7 @@ class Tcx:
                 index=range(1, len(df)))
 
             ## Speed [km/h] = distance [meter] / time-delta [second] * 3.6
-            df['Speed'] = df['DistanceMeters-delta'] / df['Time-delta'].apply(lambda td: td.total_seconds()) * 3.6
+            df[COLUMN_NAME_SPEED] = df['DistanceMeters-delta'] / df['Time-delta'].apply(lambda td: td.total_seconds()) * 3.6
 
             ## speed / cadence
             df[COLUMN_NAME_CADENCE] = df[COLUMN_NAME_CADENCE].apply(lambda x: float(x))
