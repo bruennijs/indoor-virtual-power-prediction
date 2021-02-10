@@ -10,7 +10,7 @@ COLUMN_NAME_CADENCE = 'Cadence'
 COLUMN_NAME_WATTS = 'Ext.Watts'
 
 
-class Tcx:
+class Tcx(object):
     def __init__(self, xmldict: dict):
         self._dict = xmldict
 
@@ -59,13 +59,14 @@ class Tcx:
         return prepare_tcx(df)
 
 
-def read_tcx(file_path: str) -> Tcx:
-    def read_xml(file_path: str) -> dict:
-        project_root_dir = os.path.abspath('.')
-        abs_file_path = os.path.join(project_root_dir, file_path)
-        with open(abs_file_path, mode='r', encoding='utf-8') as f:
-            content = f.read()
-            return xml_parse(content)
+    @staticmethod
+    def read_tcx(file_path: str):
+        def read_xml(file_path: str) -> dict:
+            project_root_dir = os.path.abspath('.')
+            abs_file_path = os.path.join(project_root_dir, file_path)
+            with open(abs_file_path, mode='r', encoding='utf-8') as f:
+                content = f.read()
+                return xml_parse(content)
 
-    # read xml to dict
-    return Tcx(read_xml(file_path))
+        # read xml to dict
+        return Tcx(read_xml(file_path))
