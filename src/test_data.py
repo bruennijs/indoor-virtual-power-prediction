@@ -15,6 +15,9 @@ class TrainDataSet:
     def cadence_to_speed(self) -> tuple:
         return (DataFrame(data={tcx.COLUMN_NAME_CADENCE: self.df[tcx.COLUMN_NAME_CADENCE]}), self.df[tcx.COLUMN_NAME_SPEED])
 
+    def cadence_to_externalspeed(self) -> tuple:
+        return (DataFrame(data={tcx.COLUMN_NAME_CADENCE: self.df[tcx.COLUMN_NAME_CADENCE]}), self.df[tcx.COLUMN_NAME_EXT_SPEED])
+
     def speed_to_power(self) -> tuple:
         return (DataFrame(data={tcx.COLUMN_NAME_SPEED: self.df[tcx.COLUMN_NAME_SPEED]}), self._get_power())
 

@@ -16,6 +16,11 @@ class Tcx(object):
 
     def to_dataframe(self) -> pd.DataFrame:
         def prepare_tcx(df: pd.DataFrame) -> pd.DataFrame:
+            """
+            Used if key is unknwon or differs per TCX implementat
+            :param df: ion like <TCX> with or without namespace
+            :return:
+            """
             def first_dict_value(d: dict):
                 return list(d.values()).pop()
 
