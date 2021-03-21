@@ -39,7 +39,7 @@ class RegressionByPowerTest(unittest.TestCase):
         scores: list[float] = cross_val_score(self.pipeline,
                                               X=self.df_tacx.drop(COLUMN_NAME_WATTS, axis=1),
                                               y=self.df_tacx[[COLUMN_NAME_WATTS]],
-                                              cv=KFold(n_splits=5, shuffle=True, random_state=23628763))
+                                              cv=KFold(n_splits=5, shuffle=True, random_state=37648))
 
         # THEN
         self.assertTrue(all(scores > 0.98), 'All k score results greater 0.98')
