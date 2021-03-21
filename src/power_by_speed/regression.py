@@ -26,23 +26,24 @@ class JoinAppSpeedTransformer(TransformerMixin):
 
     def __init__(self, filename: str):
         self.df_app = TrainDataSet(Tcx.read_tcx(filename)).get_dataframe()
+        self.estimator = self._train_regressor(self.df_app[[COLUMN_NAME_CADENCE]], self.df_app[COLUMN_NAME_SPEED])
 
     def fit(self, X: pd.DataFrame, y=None, **fit_params):
         return self
 
     def transform(self, X: pd.DataFrame, **transformparams):
-        def create_regressor():
-            return KNeighborsRegressor(n_neighbors=3, weights='uniform')
 
-        def train_regressor(X_, y_):
-            return create_regressor().fit(X_, y_)
-
-        y = train_regressor(self.df_app[[COLUMN_NAME_CADENCE]], self.df_app[COLUMN_NAME_SPEED])\
-            .predict(X[[COLUMN_NAME_CADENCE]])
+        y = self.estimator.predict(X[[COLUMN_NAME_CADENCE]])
 
         X_ = X.copy()
         X_[COLUMN_NAME_SPEED_APP] = pd.Series(y, index=X.index)
         return X_
+
+    def _create_regressor(self):
+        return KNeighborsRegressor(n_neighbors=3, weights='uniform')
+
+    def _train_regressor(self, X, y):
+        return self._create_regressor().fit(X, y)
 
 def create_pipeline(tcx_app_filename: str) -> Pipeline:
     return Pipeline(
