@@ -1,0 +1,54 @@
+import pandas as pd
+from sklearn.base import TransformerMixin
+from sklearn.linear_model import LinearRegression
+
+from sklearn.neighbors import KNeighborsRegressor, RadiusNeighborsRegressor
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import FunctionTransformer
+
+from src.tcx import Tcx
+from src.test_data import TrainDataSet
+
+COLUMN_NAME_SPEED = 'Speed'
+COLUMN_NAME_CADENCE = 'Cadence'
+COLUMN_NAME_WATTS = 'Ext.Watts'
+COLUMN_NAME_SPEED_APP = 'Speed-app'
+
+
+def select_features(X: pd.DataFrame, **kwargs):
+    return X[[COLUMN_NAME_SPEED_APP]]
+
+def print_debug(X, **kwargs):
+    print(X)
+    return X
+
+class JoinAppSpeedTransformer(TransformerMixin):
+
+    def __init__(self, filename: str):
+        self.df_app = TrainDataSet(Tcx.read_tcx(filename)).get_dataframe()
+
+    def fit(self, X: pd.DataFrame, y=None, **fit_params):
+        return self
+
+    def transform(self, X: pd.DataFrame, **transformparams):
+        def create_regressor():
+            return KNeighborsRegressor(n_neighbors=3, weights='uniform')
+
+        def train_regressor(X_, y_):
+            return create_regressor().fit(X_, y_)
+
+        y = train_regressor(self.df_app[[COLUMN_NAME_CADENCE]], self.df_app[COLUMN_NAME_SPEED])\
+            .predict(X[[COLUMN_NAME_CADENCE]])
+
+        X_ = X.copy()
+        X_[COLUMN_NAME_SPEED_APP] = pd.Series(y, index=X.index)
+        return X_
+
+def create_pipeline(tcx_app_filename: str) -> Pipeline:
+    return Pipeline(
+        [('app_speed_extractor', JoinAppSpeedTransformer(tcx_app_filename)),
+         ('feature_selector', FunctionTransformer(select_features)),
+         #('printer', FunctionTransformer(print_debug)),
+         ('estimator', LinearRegression())]
+    )
+

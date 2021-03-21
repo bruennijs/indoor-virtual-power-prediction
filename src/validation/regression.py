@@ -22,7 +22,7 @@ def validate_lin_reg(X_train: pd.DataFrame, y_train: pd.Series,
     print("MSE error (mean squared error / variance): {:.2f}".format(mse))
     print("sqrt(MSE) (standard deviation): {:.2f}".format(sqrt(mse)))
     print("Max error: {}".format(max_error(y_test, y_predicted)))
-    print("estimator.coefficients: {}".format(estimator.coef_))
+    # print("estimator.coefficients: {}".format(estimator.coef_))
 
     # cross k-fold validation (k=5)
     scores: list = cross_val_score(estimator, X_test.to_numpy(), y_test.to_numpy(), cv=5)
