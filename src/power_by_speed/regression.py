@@ -50,6 +50,7 @@ def create_pipeline(tcx_app_filename: str) -> Pipeline:
         [('app_speed_extractor', JoinAppSpeedTransformer(tcx_app_filename)),
          ('feature_selector', FunctionTransformer(select_features)),
          #('printer', FunctionTransformer(print_debug)),
-         ('estimator', LinearRegression())]
+         #('estimator', LinearRegression()),
+         ('estimator', KNeighborsRegressor(n_neighbors=1, weights='uniform'))]
     )
 
