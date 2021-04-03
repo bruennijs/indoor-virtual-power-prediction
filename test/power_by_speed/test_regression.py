@@ -76,7 +76,7 @@ class RegressionByPowerTest(unittest.TestCase):
                                               scoring=make_scorer(self.percentile_absolute_error))
 
         # THEN
-        self.assertLess(max(scores), 1.0, '98 percent of all abs errors is less than 1 %')
+        self.assertLess(max(scores), 0.03, '99 percent of all abs errors is less than 3 %')
 
 
     def max_error(self, y_t: pd.DataFrame, y_predicted):
@@ -84,7 +84,7 @@ class RegressionByPowerTest(unittest.TestCase):
         return abs(max(y_diff.iloc[:, 0]))
 
 
-    def percentile_absolute_error(self, y_t: pd.DataFrame, y_predicted, quantile: float = 98):
+    def percentile_absolute_error(self, y_t: pd.DataFrame, y_predicted, quantile: float = 99):
         y_diff = (y_t - y_predicted)
         abs_errors: pd.Series = y_diff.iloc[:, 0]
         abs_errors: pd.Series = abs_errors / max(y_t.iloc[:, 0])

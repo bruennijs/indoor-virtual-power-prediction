@@ -51,6 +51,6 @@ def create_pipeline(tcx_app_filename: str) -> Pipeline:
          ('feature_selector', FunctionTransformer(select_features)),
          #('printer', FunctionTransformer(print_debug)),
          #('estimator', LinearRegression()),
-         ('estimator', KNeighborsRegressor(n_neighbors=1, weights='uniform'))]
+         ('estimator', KNeighborsRegressor(n_neighbors=3, weights='uniform'))]
     )
 
