@@ -37,7 +37,18 @@ class RegressionByPowerTest(unittest.TestCase):
         # cross_val_score()
         X_train, X_test, y_train, y_test = train_test_split(self.df_tacx.drop(COLUMN_NAME_WATTS, axis=1), self.df_tacx[[COLUMN_NAME_WATTS]], train_size=0.5)
 
-        self.assertGreater(self.pipeline.fit(X_train, y_train).score(X_test, y_test), 0.98)
+        self.assertGreater(self.pipeline.fit(X_train, y_train).score(X_test, y_test), 0.99)
+
+    def test_manual_prediction(self):
+        # cross_val_score()
+        X_train, X_test, y_train, y_test = train_test_split(self.df_tacx.drop(COLUMN_NAME_WATTS, axis=1), self.df_tacx[[COLUMN_NAME_WATTS]], train_size=0.5)
+
+        self.pipeline.fit(X_train, y_train)
+
+        # assert in expected power range
+        y_pred = self.pipeline['estimator'].predict(pd.DataFrame(data=[24.1], index=[5]))
+        self.assertTrue(y_pred[0] > 111.0, msg="110 < y")
+        self.assertTrue(y_pred[0] < 113.0, msg="111 > y")
 
     def test_cv_scorer_r2(self):
         scores: list[float] = cross_val_score(self.pipeline,
@@ -66,7 +77,7 @@ class RegressionByPowerTest(unittest.TestCase):
                                               scoring=make_scorer(mean_absolute_percentage_error))
 
         # THEN
-        self.assertLess(max(scores), 0.02, 'All mean absolute percentage error less than 2.0 %')
+        self.assertLess(max(scores), 0.01, 'All mean absolute percentage error less than 2.0 %')
 
     def test_cv_scorer_percentile_abs_error(self):
         scores: list[float] = cross_val_score(self.pipeline,
@@ -76,7 +87,7 @@ class RegressionByPowerTest(unittest.TestCase):
                                               scoring=make_scorer(self.percentile_absolute_error))
 
         # THEN
-        self.assertLess(max(scores), 0.03, '99 percent of all abs errors is less than 3 %')
+        self.assertLess(max(scores), 0.01, '99 percent of all abs errors is less than 3 %')
 
 
     def max_error(self, y_t: pd.DataFrame, y_predicted):
@@ -84,7 +95,7 @@ class RegressionByPowerTest(unittest.TestCase):
         return abs(max(y_diff.iloc[:, 0]))
 
 
-    def percentile_absolute_error(self, y_t: pd.DataFrame, y_predicted, quantile: float = 99):
+    def percentile_absolute_error(self, y_t: pd.DataFrame, y_predicted, quantile: float = 99, **kwargs):
         y_diff = (y_t - y_predicted)
         abs_errors: pd.Series = y_diff.iloc[:, 0]
         abs_errors: pd.Series = abs_errors / max(y_t.iloc[:, 0])

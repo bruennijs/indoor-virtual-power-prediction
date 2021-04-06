@@ -40,7 +40,7 @@ class JoinAppSpeedTransformer(TransformerMixin):
         return X_
 
     def _create_regressor(self):
-        return KNeighborsRegressor(n_neighbors=3, weights='uniform')
+        return KNeighborsRegressor(n_neighbors=5, weights='uniform')
 
     def _train_regressor(self, X, y):
         return self._create_regressor().fit(X, y)
@@ -50,7 +50,7 @@ def create_pipeline(tcx_app_filename: str) -> Pipeline:
         [('app_speed_extractor', JoinAppSpeedTransformer(tcx_app_filename)),
          ('feature_selector', FunctionTransformer(select_features)),
          #('printer', FunctionTransformer(print_debug)),
-         #('estimator', LinearRegression()),
-         ('estimator', KNeighborsRegressor(n_neighbors=3, weights='uniform'))]
+         #('estimator', LinearRegression())]
+         ('estimator', KNeighborsRegressor(n_neighbors=5, weights='uniform'))]
     )
 
