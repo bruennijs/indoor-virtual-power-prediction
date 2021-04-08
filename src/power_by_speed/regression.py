@@ -3,8 +3,8 @@ from sklearn.base import TransformerMixin
 from sklearn.linear_model import LinearRegression
 
 from sklearn.neighbors import KNeighborsRegressor, RadiusNeighborsRegressor
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import FunctionTransformer
+from sklearn.pipeline import Pipeline, FeatureUnion
+from sklearn.preprocessing import FunctionTransformer, StandardScaler
 
 from src.tcx import Tcx
 from src.test_data import TrainDataSet
@@ -13,7 +13,7 @@ COLUMN_NAME_SPEED = 'Speed'
 COLUMN_NAME_CADENCE = 'Cadence'
 COLUMN_NAME_WATTS = 'Ext.Watts'
 COLUMN_NAME_SPEED_APP = 'Speed-app'
-
+COLUMN_NAME_GEAR_RATIO = 'Cadence-to-power-ratio'
 
 def select_features(X: pd.DataFrame, **kwargs):
     return X[[COLUMN_NAME_SPEED_APP]]
@@ -49,7 +49,6 @@ def create_pipeline(tcx_app_filename: str) -> Pipeline:
     return Pipeline(
         [('app_speed_extractor', JoinAppSpeedTransformer(tcx_app_filename)),
          ('feature_selector', FunctionTransformer(select_features)),
-         #('printer', FunctionTransformer(print_debug)),
          #('estimator', LinearRegression())]
          ('estimator', KNeighborsRegressor(n_neighbors=5, weights='uniform'))]
     )

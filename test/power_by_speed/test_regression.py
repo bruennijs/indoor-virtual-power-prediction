@@ -9,6 +9,7 @@ import numpy as np
 from sklearn.metrics import make_scorer, max_error, mean_absolute_percentage_error
 from sklearn.model_selection import cross_val_score, train_test_split, KFold
 
+from src.power_by_speed.preprocessor import create_pipeline as create_preprocess_pipeline
 from src.power_by_speed.regression import create_pipeline
 from src.tcx import Tcx, COLUMN_NAME_CADENCE, COLUMN_NAME_WATTS, COLUMN_NAME_SPEED
 from src.test_data import TrainDataSet
@@ -23,9 +24,13 @@ class RegressionByPowerTest(unittest.TestCase):
     #def setUpClass(cls):
 
     def setUp(self):
+        self.pipeline_preprocess = create_preprocess_pipeline()
+        self.pipeline = create_pipeline('./../tcx/cadence_1612535177298-gear7.tcx')
         self.df_app: DataFrame = TrainDataSet(Tcx.read_tcx(file_path='./../tcx/cadence_1612535177298-gear7.tcx')).get_dataframe()
         self.df_tacx: DataFrame = TrainDataSet(Tcx.read_tcx(file_path='./../tcx/tacx-activity_6225123072-gear7-resistance3.tcx')).get_dataframe()
-        self.pipeline = create_pipeline('./../tcx/cadence_1612535177298-gear7.tcx')
+
+        self.df_tacx_pp: DataFrame = self.pipeline_preprocess.fit_transform(self.df_tacx)
+        #self.df_app_pp: DataFrame = self.pipeline_preprocess.fit_transform(self.df_app)
 
     def test_power_prediction(self):
 
@@ -41,7 +46,7 @@ class RegressionByPowerTest(unittest.TestCase):
 
     def test_manual_prediction(self):
         # cross_val_score()
-        X_train, X_test, y_train, y_test = train_test_split(self.df_tacx.drop(COLUMN_NAME_WATTS, axis=1), self.df_tacx[[COLUMN_NAME_WATTS]], train_size=0.5)
+        X_train, X_test, y_train, y_test = train_test_split(self.df_tacx, self.df_tacx[[COLUMN_NAME_WATTS]], train_size=0.5)
 
         self.pipeline.fit(X_train, y_train)
 
@@ -52,7 +57,7 @@ class RegressionByPowerTest(unittest.TestCase):
 
     def test_cv_scorer_r2(self):
         scores: list[float] = cross_val_score(self.pipeline,
-                                              X=self.df_tacx.drop(COLUMN_NAME_WATTS, axis=1),
+                                              X=self.df_tacx,
                                               y=self.df_tacx[[COLUMN_NAME_WATTS]],
                                               cv=KFold(n_splits=5, shuffle=True, random_state=37648))
 
@@ -61,33 +66,53 @@ class RegressionByPowerTest(unittest.TestCase):
 
     def test_cv_scorer_max_error(self):
         scores: list[float] = cross_val_score(self.pipeline,
-                                              X=self.df_tacx.drop(COLUMN_NAME_WATTS, axis=1),
+                                              X=self.df_tacx,
                                               y=self.df_tacx[[COLUMN_NAME_WATTS]],
                                               cv=KFold(n_splits=5, shuffle=True, random_state=37648),
                                               scoring=make_scorer(max_error))
 
         # THEN
-        self.assertLess(max(scores), 1.0, 'All k max errors less than 1.0 watts')
+        self.assertLess(max(scores), 3.0, 'All k max errors less than 1.0 watts')
+
+    def test_cv_scorer_max_error_preprocessed(self):
+        scores: list[float] = cross_val_score(self.pipeline,
+                                              X=self.df_tacx_pp,
+                                              y=self.df_tacx_pp[[COLUMN_NAME_WATTS]],
+                                              cv=KFold(n_splits=5, shuffle=True, random_state=37648),
+                                              scoring=make_scorer(max_error))
+
+        # THEN
+        self.assertLess(max(scores), 3.01, 'All k max errors less than 3.01 watts')
 
     def test_cv_scorer_max_abs_percentage_error(self):
         scores: list[float] = cross_val_score(self.pipeline,
-                                              X=self.df_tacx.drop(COLUMN_NAME_WATTS, axis=1),
+                                              X=self.df_tacx,
                                               y=self.df_tacx[[COLUMN_NAME_WATTS]],
                                               cv=KFold(n_splits=5, shuffle=True, random_state=37648),
                                               scoring=make_scorer(mean_absolute_percentage_error))
 
         # THEN
-        self.assertLess(max(scores), 0.01, 'All mean absolute percentage error less than 2.0 %')
+        self.assertLess(max(scores), 0.01, 'All mean absolute percentage error less than 1.0 %')
 
     def test_cv_scorer_percentile_abs_error(self):
         scores: list[float] = cross_val_score(self.pipeline,
-                                              X=self.df_tacx.drop(COLUMN_NAME_WATTS, axis=1),
+                                              X=self.df_tacx,
                                               y=self.df_tacx[[COLUMN_NAME_WATTS]],
                                               cv=KFold(n_splits=5, shuffle=True, random_state=37648),
                                               scoring=make_scorer(self.percentile_absolute_error))
 
         # THEN
-        self.assertLess(max(scores), 0.01, '99 percent of all abs errors is less than 3 %')
+        self.assertLess(max(scores), 0.01, '99 percent of all abs errors is less than 1 %')
+
+    def test_cv_scorer_percentile_abs_error_preprocessed(self):
+        scores: list[float] = cross_val_score(self.pipeline,
+                                              X=self.df_tacx_pp,
+                                              y=self.df_tacx_pp[[COLUMN_NAME_WATTS]],
+                                              cv=KFold(n_splits=5, shuffle=True, random_state=37648),
+                                              scoring=make_scorer(self.percentile_absolute_error))
+
+        # THEN
+        self.assertLess(max(scores), 0.01, '99 percent of all abs errors is less than 1 %')
 
 
     def max_error(self, y_t: pd.DataFrame, y_predicted):
@@ -96,11 +121,11 @@ class RegressionByPowerTest(unittest.TestCase):
 
 
     def percentile_absolute_error(self, y_t: pd.DataFrame, y_predicted, quantile: float = 99, **kwargs):
-        y_diff = (y_t - y_predicted)
+        y_diff: pd.DataFrame = y_t - y_predicted
         abs_errors: pd.Series = y_diff.iloc[:, 0]
-        abs_errors: pd.Series = abs_errors / max(y_t.iloc[:, 0])
-        percentile = np.percentile(abs_errors.to_numpy(), quantile)
-        return percentile
+        abs_errors_scaled: pd.Series = abs_errors / y_t.iloc[:, 0]
+        abs_errors_scaled: pd.Series = abs_errors_scaled.apply(lambda x: abs(x))
+        return np.percentile(abs_errors_scaled.to_numpy(), quantile)
 
 
 if __name__ == '__main__':
