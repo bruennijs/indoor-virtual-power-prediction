@@ -82,7 +82,7 @@ class RegressionByPowerTest(unittest.TestCase):
                                               scoring=make_scorer(max_error))
 
         # THEN
-        self.assertLess(max(scores), 3.01, 'All k max errors less than 3.01 watts')
+        self.assertLess(max(scores), 3.01, 'All k max errors less than 3.0 watts')
 
     def test_cv_scorer_max_abs_percentage_error(self):
         scores: list[float] = cross_val_score(self.pipeline,
